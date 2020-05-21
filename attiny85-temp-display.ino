@@ -10,7 +10,7 @@
       ATiny85 Microcontroller
       BME-280 Sensor (Temperature, Pressure, Humidity)
       74HC595 8-bit Shift Register (Qty 4)
-      7-Segement LED Display (Qty 4)
+      7-Segment LED Display (Qty 4)
       0.1uF Ceramic Capacitor (Qty 2)
       100uF Electrolytic Capacitor
       5V Power Supply
@@ -119,7 +119,7 @@ void loop() {
   switch (state) {
     case 0:
       value = (int) (bme.readTemperature() * 1.8 * 10) + 320; // Fahrenheit
-      // value = (int) (bme.readTemperature() * 10);          // Celcius
+      // value = (int) (bme.readTemperature() * 10);          // Celsius
       state = 1;
       break;
     case 1:
@@ -154,7 +154,7 @@ void loop() {
     d = 21; // Add degree mark
   }
 
-  // Humiditiy in %
+  // Humidity in %
   if (state == 0) {
     a = 23; // Add H prefix
   }
