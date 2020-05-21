@@ -12,7 +12,7 @@ Components:
 * 5V Power Supply
 
 ## Requirements
-This sketch requires a version of the Wire library that is compatible with the ATtiny85 for the I2C communciation to work with the BME-280 sensor.  I used *ATTinyCore* arduino core by Spence Konde which has a version of the Wire library that works with the ATtiny85 and was able to use the standard *Adafruit_BME280* library to pull data from the BME-280.  You can install *ATTinyCore* putting the board manager URL in the Arduino IDE preferences: `http://drazzy.com/package_drazzy.com_index.json`  
+This sketch requires a version of the Wire library that is compatible with the ATtiny85 for the I2C communciation to work with the BME-280 sensor.  I used the [ATTinyCore arduino core by Spence Konde](https://github.com/SpenceKonde/ATTinyCore) which has a version of the Wire library that works with the ATtiny85 and was able to use the standard *Adafruit_BME280* library to pull data from the BME-280.  You can install *ATTinyCore* putting the board manager URL in the Arduino IDE preferences: `http://drazzy.com/package_drazzy.com_index.json`  
 Set the board to the ATtiny85 chip at 1Mhz (internal).
 
 ## Programming Notes:
