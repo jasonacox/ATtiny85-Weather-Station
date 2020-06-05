@@ -9,7 +9,7 @@ Components:
 * 7-Segment LED Display (Qty 4)
 * 0.1uF Ceramic Capacitor (Qty 2)
 * 100uF Electrolytic Capacitor
-* 5V Power Supply
+* 5V Power Supply (Alternatively you can use a 5V Solar cell, 3.7V lithium ion battery and a TP4056 constant-current/constant-voltage linear charger to charge the battery during the day).
 
 ## Requirements
 This sketch requires a version of the Wire library that is compatible with the ATtiny85 for the I2C communication to work with the BME-280 sensor.  I used the [ATTinyCore arduino core by Spence Konde](https://github.com/SpenceKonde/ATTinyCore) which has a version of the Wire library that works with the ATtiny85 and was able to use the standard *Adafruit_BME280* library to pull data from the BME-280.  You can install *ATTinyCore* putting the board manager URL in the Arduino IDE preferences: `http://drazzy.com/package_drazzy.com_index.json`  
@@ -21,5 +21,9 @@ or something similar it drives an LED on PB0 which will interfere with I2C commu
 the chip from the programmer after uploading to get it to work in the circuit.
 
 ## Memory Warning
-This sketch uses nearly all of the ATtiny85 program storage space (8174 bytes) so you may get an overflow error if the libraries change or you add any code.
+This sketch uses nearly all of the ATtiny85 program storage space (8K) so you may get an overflow error if the libraries change or you add any code.
 
+## Display
+      [ 70'] - Temperature in degree (positive & negative)
+      [ 24r] - Relative Humidity
+      [_970] - Pressure in hPa with prefix for rising - or falling _

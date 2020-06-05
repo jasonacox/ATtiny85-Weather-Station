@@ -1,6 +1,6 @@
+#pragma GCC optimize ("-Os")
 /*
-  ATtiny85 Weather Station
-  Temperature + Humidity + Barometer via 7-Segment LED Display
+  ATtiny85 Temperature + Humidity + Barometer 7-Segment LED Display
 
   Author: Jason A. Cox - @jasonacox
 
@@ -23,9 +23,14 @@
       I2C communcation with BME-280 uses PB0/SDA and PB2/SCL. If you use the Tiny AVR Programmer from Sparkfun
       it drives an LED on PB0 and will interfear with I2C communcation. You will need to remove
       the chip from the programmer after uploading to get it to work in the circuit.
-      
-      This sketch uses nearly all of the ATtiny85 program storage space (8174 bytes) so you
+
+      This sketch uses nearly all of the ATtiny85 program storage space (8k bytes) so you
       may get an overflow error if the libraries change.
+
+  Display:
+      [ 70'] - Temperature in degree (positive & negative)
+      [ 24r] - Relative Humidity
+      [_970] - Pressure in hPa with prefix for rising - or falling _
 */
 
 /* Includes */
@@ -40,8 +45,7 @@
 #define clockPin 4    // Pin connected to SH_CP of 74HC595
 
 /* Global variables */
-bool units;           // True = SI, False = Imperial
-int state;            // State flag to trigger units change
+byte state = 0;       // State flag to trigger units change
 
 Adafruit_BME280 bme; // I2C
 
@@ -80,16 +84,23 @@ static byte numArray[] = {
   0b11110111, // 9.
   0b00000001, // . (Decimal)
   0b11000110, // . (Degree Mark)
-  0b00000000, // blank            (index 22)
-  0b01101110,  // H                (index 23)
-  0b00101110  // h                (index 24)
+  0b00000000, // blank           (index 22)
+  0b00001010, // r               (index 23)
+  0b00101110, // h               (index 24)
+  0b00010000, // falling v       (index 25)
+  0b10000000, // rising  ^       (index 26)
+  0b00000010, // negative   -    (index 27)
+  0b01101110  // H               (index 28)
 }; // All Off
+
+// circular buffer to store pressure trend for last ~12m
+int cbuf[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+byte cread = 1;  // index
 
 /*
    SETUP
 */
 void setup() {
-  state = 0;
 
   // Set up pins for driving the 74HC595 shift registers / LEDs
   pinMode(dataPin, OUTPUT);
@@ -98,87 +109,106 @@ void setup() {
 
   // Initialize BME280 - Temp, Humidity and Pressure sensor
   bool status = bme.begin(0x76);
-  
-  // Clear displays
+
+  // Set display with startup image
   digitalWrite(latchPin, 0);
-  sendOut(dataPin, clockPin, 0b00000000);
-  sendOut(dataPin, clockPin, 0b00000000);
-  sendOut(dataPin, clockPin, 0b00000000);
-  sendOut(dataPin, clockPin, 0b00000000);
+  sendOut(0b10010000);
+  sendOut(0b10010000);
+  sendOut(0b10010000);
+  sendOut(0b10010000);
   digitalWrite(latchPin, 1);
-  delay(100);
+
 }
 
 /*
     MAIN LOOP
 */
 void loop() {
-  int value, mswait;
-  int a, b, c, d;
+  int value;
+  byte a, b, c, d;
+  bool rising, neg;
+
+  delay(5000);  // 5s delay
 
   switch (state) {
-    case 0:
-      value = (int) (bme.readTemperature() * 1.8 * 10) + 320; // Fahrenheit
-      // value = (int) (bme.readTemperature() * 10);          // Celsius
-      state = 1;
-      break;
-    case 1:
-      value = (int) (bme.readPressure() / 100.0);
-      state = 2;
-      break;
-    case 2:
-      value = (int) (bme.readHumidity());
+    case 5:
       state = 0;
+    case 0:
+    case 1:
+    case 2:
+      value = (int) (bme.readTemperature() * 1.8 * 10) + 320; // for Fahrenheit
+      // value = (int) (bme.readTemperature() * 10);          // for Celsius
+      break;
+    case 3:
+      value = (int) (bme.readHumidity() * 10);
+      break;
+    case 4:
+      value = (int) (bme.readPressure() / 100.0);               // for hPa
+      // value = (int) (bme.readPressure() * 0.0002953 * 100);  // for inHg
+
+      // Determine if pressure is rising or falling by looking back 12m ago
+      rising = false;
+      if (cbuf[cread] < value) {
+        rising = true;
+      }
+      // Use circular buffer to store pressure trend
+      cbuf[(cread + 31) % 32] = value;
+      cread = (cread + 1) % 32;
       break;
   }
 
-  // Determine Digits
-  d = value % 10;  //ones
+  // Determine Digits on Display [abcd]
+  a = 0;
+  if (value < 0) {
+    a = 27; // negative sign -
+    value = -value; // flip positive
+  }
+  d = value % 10;  // ones
   value = (value - d) / 10;
   c = value % 10; // tens
   value = (value - c) / 10;
   b = value % 10; // hundreds
   value = (value - b) / 10;
-  a = value % 10; // thousands
+  if (!a) {
+    a = value % 10; // thousands
+  }
 
   // Remove leading zeros
   if (a == 0) {
-    a = 22;
+    a = 22; // space
     if (b == 0) {
-      b = 22;
+      b = 22;  // space
     }
   }
 
-  // Temperature in F'
-  if (state == 1) {
-    d = 21; // Add degree mark
+  // Temperature - add degree mark
+  if (state < 3) {
+    d = 21; // degree mark
   }
 
-  // Humidity in %
-  if (state == 0) {
-    a = 23; // Add H prefix
+  // Humiditiy - rh %
+  if (state == 3) {
+    d = 23; // Add r suffix - relative humidity
   }
 
-  // Pressure in hPa
-  if (state == 2) {
-    if (a == 22) {
-      a = b; // if < 1000hPa shift digits left
-      b = c;
-      c = d;
-      d = 24; // and add "h" suffix
+  // Pressure - hPa
+  if (state == 4) {
+    if (a == 22) { // if < 1000hPa add rising/falling indicator prefix
+      a = 25; // falling sign
+      if (rising) a = 26;  // rising sign
     }
-    delay(5000);  // add 5s delay before replacing temp display
+
   }
 
   // Send digits to display
   digitalWrite(latchPin, 0);
-  sendOut(dataPin, clockPin, numArray[a]);
-  sendOut(dataPin, clockPin, numArray[b]);
-  sendOut(dataPin, clockPin, numArray[c]);
-  sendOut(dataPin, clockPin, numArray[d]);
+  sendOut(numArray[a]);
+  sendOut(numArray[b]);
+  sendOut(numArray[c]);
+  sendOut(numArray[d]);
   digitalWrite(latchPin, 1);
 
-  delay(3000);  // 3s delay
+  state++; 
 
 }
 
@@ -187,19 +217,17 @@ void loop() {
 
    This sifts 8 bits out MSB first on the rising edge of the clock
 */
-void sendOut(int myDataPin, int myClockPin, byte myDataOut) {
+void sendOut(byte myDataOut) {
   int i = 0;
   int pinState;
-  pinMode(myClockPin, OUTPUT);
-  pinMode(myDataPin, OUTPUT);
 
   // Clear data and clock output
-  digitalWrite(myDataPin, 0);
-  digitalWrite(myClockPin, 0);
+  digitalWrite(dataPin, 0);
+  digitalWrite(clockPin, 0);
+  
   // Send each bit in the byte myDataOut
-
   for (i = 7; i >= 0; i--)  {
-    digitalWrite(myClockPin, 0);
+    digitalWrite(clockPin, 0);
     if ( myDataOut & (1 << i) ) {
       pinState = 1;
     }
@@ -207,12 +235,11 @@ void sendOut(int myDataPin, int myClockPin, byte myDataOut) {
       pinState = 0;
     }
     // Send pinState
-    digitalWrite(myDataPin, pinState);
-
+    digitalWrite(dataPin, pinState);
     // Shift register with Clock
-    digitalWrite(myClockPin, 1);
+    digitalWrite(clockPin, 1);
     // Zero out data pin
-    digitalWrite(myDataPin, 0);
+    digitalWrite(dataPin, 0);
   }
-  digitalWrite(myClockPin, 0);
+  digitalWrite(clockPin, 0);
 }
