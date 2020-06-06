@@ -44,9 +44,9 @@ The Logic  and Display boards:
 ![Circuit Board](images/WeatherStation-logic-display.png)
 
 Both boards together and running:
-![Circuit Board](images/WeatherStation-logic-display.png)
+![Circuit Board](images/WeatherStation-demo.png)
 
-I printed a simple cylinder case (![Thingiverse](https://www.thingiverse.com/thing:4432103)) to mount the weather station and have it on the back patio:
+I printed a simple cylinder case ([Thingiverse](https://www.thingiverse.com/thing:4432103)) to mount the weather station and have it on the back patio:
 ![Circuit Board](images/WeatherStation-in-case.png)
 
 ## Power Supply
