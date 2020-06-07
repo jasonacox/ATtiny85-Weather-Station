@@ -1,5 +1,5 @@
 # ATtiny85 Weather Station
-This project is an ATtiny85 based mini Weather Station that displays temperature, humidity, and pressure via four 7-segment LED displays.  
+This project is an ATtiny85 based mini Weather Station that uses the BME-280 Sensor to measure and display temperature, humidity, and pressure via four 7-segment LED displays.  
 
 ## Requirements
 This sketch requires a version of the Wire library that is compatible with the ATtiny85 for the I2C communication to work with the BME-280 sensor.  I used the [ATTinyCore arduino core by Spence Konde](https://github.com/SpenceKonde/ATTinyCore) which has a version of the Wire library that works with the ATtiny85 and was able to use the standard *Adafruit_BME280* library to pull data from the BME-280.  You can install *ATTinyCore* putting the board manager URL in the Arduino IDE preferences: `http://drazzy.com/package_drazzy.com_index.json`  
