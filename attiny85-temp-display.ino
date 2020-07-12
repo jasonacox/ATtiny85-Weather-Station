@@ -44,6 +44,11 @@
 #define latchPin 3    // Pin connected to ST_CP of 74HC595
 #define clockPin 4    // Pin connected to SH_CP of 74HC595
 
+/* Pressure Change */
+#define STEADY 0
+#define RISE 1
+#define FALL 2
+
 /* Global variables */
 byte state = 0;       // State flag to trigger units change
 
@@ -61,7 +66,7 @@ Adafruit_BME280 bme; // I2C
     0b00000000
       ABCDEFGH
 */
-static byte numArray[] = {
+const static byte numArray[]  = {
   0b11111100, // 0
   0b01100000, // 1
   0b11011010, // 2
@@ -117,7 +122,6 @@ void setup() {
   sendOut(0b10010000);
   sendOut(0b10010000);
   digitalWrite(latchPin, 1);
-
 }
 
 /*
@@ -125,8 +129,8 @@ void setup() {
 */
 void loop() {
   int value;
-  byte a, b, c, d;
-  bool rising, neg;
+  byte a, b, c, d, pressure;
+  bool neg;
 
   delay(5000);  // 5s delay
 
@@ -143,17 +147,21 @@ void loop() {
       value = (int) (bme.readHumidity() * 10);
       break;
     case 4:
-      value = (int) (bme.readPressure() / 100.0);               // for hPa
+      value = (int) (bme.readPressure() );               // for Pa
       // value = (int) (bme.readPressure() * 0.0002953 * 100);  // for inHg
 
       // Determine if pressure is rising or falling by looking back 12m ago
-      rising = false;
+      pressure = STEADY;
       if (cbuf[cread] < value) {
-        rising = true;
+        pressure = RISE;
+      }
+      if (cbuf[cread] > value) {
+        pressure = FALL;
       }
       // Use circular buffer to store pressure trend
       cbuf[(cread + 31) % 32] = value;
       cread = (cread + 1) % 32;
+      value = value / 100;  // convert to hPa
       break;
   }
 
@@ -186,7 +194,7 @@ void loop() {
     d = 21; // degree mark
   }
 
-  // Humiditiy - rh %
+  // Humidity - rh %
   if (state == 3) {
     d = 23; // Add r suffix - relative humidity
   }
@@ -194,8 +202,9 @@ void loop() {
   // Pressure - hPa
   if (state == 4) {
     if (a == 22) { // if < 1000hPa add rising/falling indicator prefix
-      a = 25; // falling sign
-      if (rising) a = 26;  // rising sign
+      // if pressure==STEADY leave blank
+      if (pressure==RISE) a = 26;  // rising sign
+      if (pressure==FALL) a = 25;  // falling sign
     }
 
   }
@@ -208,7 +217,7 @@ void loop() {
   sendOut(numArray[d]);
   digitalWrite(latchPin, 1);
 
-  state++; 
+  state++;
 
 }
 
@@ -224,7 +233,7 @@ void sendOut(byte myDataOut) {
   // Clear data and clock output
   digitalWrite(dataPin, 0);
   digitalWrite(clockPin, 0);
-  
+
   // Send each bit in the byte myDataOut
   for (i = 7; i >= 0; i--)  {
     digitalWrite(clockPin, 0);
