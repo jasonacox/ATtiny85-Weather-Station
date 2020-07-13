@@ -31,6 +31,9 @@ the chip from the programmer after uploading to get it to work in the circuit.
 ## Memory Warning
 This sketch uses nearly all of the ATtiny85 program storage space (8K) so you may get an overflow error if the libraries change or you add any code.
 
+[UPDATE] I created a minimized BME280 library to reduce the PROGMEM space required.  You 
+will need to download and install the [https://github.com/jasonacox/Tiny_BME280_Library](https://github.com/jasonacox/Tiny_BME280_Library) library in your ~/Documents/Arduino/libraries/ directory and restart the Arduino IDE.
+
 ## Display
       [ 70'] - Temperature in degree (positive & negative)
       [ 24r] - Relative Humidity

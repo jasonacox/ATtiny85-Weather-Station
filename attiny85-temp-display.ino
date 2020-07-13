@@ -24,8 +24,9 @@
       it drives an LED on PB0 and will interfear with I2C communcation. You will need to remove
       the chip from the programmer after uploading to get it to work in the circuit.
 
-      This sketch uses nearly all of the ATtiny85 program storage space (8k bytes) so you
-      may get an overflow error if the libraries change.
+      This sketch uses minimized version of the Adafruit_BME280 Library that excludes SPI supports and other
+      advanced features to reduce the amount of PROGMEM space that is required. Library is available
+      here: https://github.com/jasonacox/Tiny_BME280_Library
 
   Display:
       [ 70'] - Temperature in degree (positive & negative)
@@ -35,7 +36,7 @@
 
 /* Includes */
 #include <Adafruit_Sensor.h>
-#include <Adafruit_BME280.h>
+#include <Tiny_BME280.h> 
 
 /* ATtiny85 Pins */
 #define SDApin 0      // Pin connected to SDA   of BME280
@@ -52,7 +53,7 @@
 /* Global variables */
 byte state = 0;       // State flag to trigger units change
 
-Adafruit_BME280 bme; // I2C
+Tiny_BME280 bme; // I2C
 
 /* Set up 7-segment LED Binary Data
 
@@ -116,12 +117,8 @@ void setup() {
   bool status = bme.begin(0x76);
 
   // Set display with startup image
-  digitalWrite(latchPin, 0);
-  sendOut(0b10010000);
-  sendOut(0b10010000);
-  sendOut(0b10010000);
-  sendOut(0b10010000);
-  digitalWrite(latchPin, 1);
+  displayRaw(0b10010000, 0b10010000, 0b10010000, 0b10010000);
+
 }
 
 /*
@@ -140,15 +137,15 @@ void loop() {
     case 0:
     case 1:
     case 2:
-      value = (int) (bme.readTemperature() * 1.8 * 10) + 320; // for Fahrenheit
-      // value = (int) (bme.readTemperature() * 10);          // for Celsius
+      value = (int) (bme.readTemperature() * 1.8 * 10) + 320; // in Fahrenheit
+      // value = (int) (bme.readTemperature() * 10);          // in Celsius
       break;
     case 3:
       value = (int) (bme.readHumidity() * 10);
       break;
     case 4:
-      value = (int) (bme.readPressure() );               // for Pa
-      // value = (int) (bme.readPressure() * 0.0002953 * 100);  // for inHg
+      value = (int) (bme.readPressure() / 10 );                 // in dekapascals
+      // value = (int) (bme.readPressure() * 0.0002953 * 100);  // in inHg
 
       // Determine if pressure is rising or falling by looking back 12m ago
       pressure = STEADY;
@@ -161,7 +158,7 @@ void loop() {
       // Use circular buffer to store pressure trend
       cbuf[(cread + 31) % 32] = value;
       cread = (cread + 1) % 32;
-      value = value / 100;  // convert to hPa
+      value = (int)(value / 10);  // convert to hPa (hectopascal)
       break;
   }
 
@@ -199,26 +196,56 @@ void loop() {
     d = 23; // Add r suffix - relative humidity
   }
 
-  // Pressure - hPa
+  // Send digits to display
+  displayRaw(numArray[a], numArray[b], numArray[c], numArray[d]);
+
+  // Pressure Animation
   if (state == 4) {
     if (a == 22) { // if < 1000hPa add rising/falling indicator prefix
-      // if pressure==STEADY leave blank
-      if (pressure==RISE) a = 26;  // rising sign
-      if (pressure==FALL) a = 25;  // falling sign
+      if (pressure == RISE) { // rising
+        for (int x = 1; x < 3; x++) {
+          displayRaw(0b00010000,  numArray[b], numArray[c], numArray[d]);
+          delay(250);
+          displayRaw(0b00000010,  numArray[b], numArray[c], numArray[d]);
+          delay(250);
+          displayRaw(0b10000000,  numArray[b], numArray[c], numArray[d]);
+          delay(250);
+          displayRaw(0b00000000,  numArray[b], numArray[c], numArray[d]);
+          delay(250);
+        }
+      }
+      if (pressure == STEADY) { // flat
+        delay(250 * 4 * 2);
+      }
+      if (pressure == FALL) { // falling
+        for (int x = 1; x < 3; x++) {
+          displayRaw(0b10000000,  numArray[b], numArray[c], numArray[d]);
+          delay(250);
+          displayRaw(0b00000010,  numArray[b], numArray[c], numArray[d]);
+          delay(250);
+          displayRaw(0b00010000,  numArray[b], numArray[c], numArray[d]);
+          delay(250);
+          displayRaw(0b00000000,  numArray[b], numArray[c], numArray[d]);
+          delay(250);
+        }
+      }
     }
-
   }
-
-  // Send digits to display
-  digitalWrite(latchPin, 0);
-  sendOut(numArray[a]);
-  sendOut(numArray[b]);
-  sendOut(numArray[c]);
-  sendOut(numArray[d]);
-  digitalWrite(latchPin, 1);
 
   state++;
 
+}
+
+/*
+   Send digits out to 7-segment LEDs
+*/
+void displayRaw (byte a, byte b, byte c, byte d) {
+  digitalWrite(latchPin, 0);
+  sendOut(a);
+  sendOut(b);
+  sendOut(c);
+  sendOut(d);
+  digitalWrite(latchPin, 1);
 }
 
 /*
