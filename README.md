@@ -41,10 +41,10 @@ git clone https://github.com/jasonacox/Tiny_BME280_Library.git
 ```
 
 ## Display
-      [ 70'] - Temperature in degree F (positive & negative)
+      [ 70'] - Temperature in degrees F (positive & negative)
       [ 24r] - Relative Humidity
       [_970] - Pressure in hPa with prefix for rising - or falling _ animation
-      [ 21c] - Temperature in degree C (positive & negative)
+      [ 21c] - Temperature in degrees C (positive & negative)
 
 ## Construction
 
