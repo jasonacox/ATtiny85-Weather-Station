@@ -29,14 +29,15 @@
       here: https://github.com/jasonacox/Tiny_BME280_Library
 
   Display:
-      [ 70'] - Temperature in degree (positive & negative)
+      [ 70'] - Temperature in degree F (positive & negative)
       [ 24r] - Relative Humidity
       [_970] - Pressure in hPa with prefix for rising - or falling _
+      [ 21c] - Temperature in degree C (positive & negative)
 */
 
 /* Includes */
 #include <Adafruit_Sensor.h>
-#include <Tiny_BME280.h> 
+#include <Tiny_BME280.h>
 
 /* ATtiny85 Pins */
 #define SDApin 0      // Pin connected to SDA   of BME280
@@ -96,10 +97,11 @@ const static byte numArray[]  = {
   0b00010000, // falling v       (index 25)
   0b10000000, // rising  ^       (index 26)
   0b00000010, // negative   -    (index 27)
-  0b01101110  // H               (index 28)
+  0b01101110,  // H              (index 28)
+  0b00011010   // c              (index 29)
 }; // All Off
 
-// circular buffer to store pressure trend for last ~12m
+// circular buffer to store pressure trend for last ~15m
 int cbuf[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 byte cread = 1;  // index
 
@@ -114,7 +116,10 @@ void setup() {
   pinMode(latchPin, OUTPUT);
 
   // Initialize BME280 - Temp, Humidity and Pressure sensor
-  bool status = bme.begin(0x76);
+  while (bme.begin(0x76) == false) {
+    displayRaw(0b10011110, 0b00001010, 0b00001010, 0b00000000);  // Err
+    delay(250);
+  }
 
   // Set display with startup image
   displayRaw(0b10010000, 0b10010000, 0b10010000, 0b10010000);
@@ -127,12 +132,11 @@ void setup() {
 void loop() {
   int value;
   byte a, b, c, d, pressure;
-  bool neg;
 
   delay(5000);  // 5s delay
 
   switch (state) {
-    case 5:
+    case 6:
       state = 0;
     case 0:
     case 1:
@@ -160,6 +164,9 @@ void loop() {
       cread = (cread + 1) % 32;
       value = (int)(value / 10);  // convert to hPa (hectopascal)
       break;
+    case 5:
+      value = (int) (bme.readTemperature() * 10);          // in Celsius
+      break;
   }
 
   // Determine Digits on Display [abcd]
@@ -186,9 +193,14 @@ void loop() {
     }
   }
 
-  // Temperature - add degree mark
+  // Temperature F - add degree mark
   if (state < 3) {
     d = 21; // degree mark
+  }
+
+  // Temperature C - add c mark
+  if (state == 5) {
+    d = 29; // Add c suffix
   }
 
   // Humidity - rh %
