@@ -1,4 +1,6 @@
-# ATtiny85 Weather Station
+# ATtiny85 Weather Station #
+[![Build Status](https://travis-ci.org/jasonacox/ATtiny85-Weather-Station.svg?branch=master)](https://travis-ci.org/jasonacox/ATtiny85-Weather-Station)
+
 This project is an ATtiny85 based mini Weather Station that uses the BME-280 Sensor to measure and display temperature, humidity, and pressure via four 7-segment LED displays.  
 
 ## Requirements
@@ -32,12 +34,17 @@ the chip from the programmer after uploading to get it to work in the circuit.
 This sketch uses nearly all of the ATtiny85 program storage space (8K) so you may get an overflow error if the libraries change or you add any code.
 
 [UPDATE] I created a minimized BME280 library to reduce the PROGMEM space required.  You 
-will need to download and install the [https://github.com/jasonacox/Tiny_BME280_Library](https://github.com/jasonacox/Tiny_BME280_Library) library in your ~/Documents/Arduino/libraries/ directory and restart the Arduino IDE.
+will need to clone/download and install the [https://github.com/jasonacox/Tiny_BME280_Library](https://github.com/jasonacox/Tiny_BME280_Library) library in your ~/Documents/Arduino/libraries/ directory and restart the Arduino IDE.
+```bash
+cd ~/Documents/Arduino/libraries
+git clone https://github.com/jasonacox/Tiny_BME280_Library.git 
+```
 
 ## Display
-      [ 70'] - Temperature in degree (positive & negative)
+      [ 70'] - Temperature in degree F (positive & negative)
       [ 24r] - Relative Humidity
-      [_970] - Pressure in hPa with prefix for rising - or falling _
+      [_970] - Pressure in hPa with prefix for rising - or falling _ animation
+      [ 21c] - Temperature in degree C (positive & negative)
 
 ## Construction
 
