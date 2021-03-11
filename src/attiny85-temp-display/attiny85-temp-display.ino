@@ -136,18 +136,19 @@ void loop() {
   delay(5000);  // 5s delay
 
   switch (state) {
-    case 6:
+    case 7:
       state = 0;
     case 0:
     case 1:
     case 2:
+    case 3:
       value = (int) (bme.readTemperature() * 1.8 * 10) + 320; // in Fahrenheit
       // value = (int) (bme.readTemperature() * 10);          // in Celsius
       break;
-    case 3:
+    case 4:
       value = (int) (bme.readHumidity() * 10);
       break;
-    case 4:
+    case 5:
       value = (int) (bme.readPressure() / 10 );                 // in dekapascals
       // value = (int) (bme.readPressure() * 0.0002953 * 100);  // in inHg
 
@@ -164,7 +165,7 @@ void loop() {
       cread = (cread + 1) % 32;
       value = (int)(value / 10);  // convert to hPa (hectopascal)
       break;
-    case 5:
+    case 6:
       value = (int) (bme.readTemperature() * 10);          // in Celsius
       break;
   }
@@ -194,17 +195,17 @@ void loop() {
   }
 
   // Temperature F - add degree mark
-  if (state < 3) {
+  if (state < 4) {
     d = 21; // degree mark
   }
 
   // Temperature C - add c mark
-  if (state == 5) {
+  if (state == 6) {
     d = 29; // Add c suffix
   }
 
   // Humidity - rh %
-  if (state == 3) {
+  if (state == 4) {
     d = 23; // Add r suffix - relative humidity
   }
 
@@ -212,7 +213,7 @@ void loop() {
   displayRaw(numArray[a], numArray[b], numArray[c], numArray[d]);
 
   // Pressure Animation
-  if (state == 4) {
+  if (state == 5) {
     if (a == 22) { // if < 1000hPa add rising/falling indicator prefix
       if (pressure == RISE) { // rising
         for (int x = 1; x < 3; x++) {
