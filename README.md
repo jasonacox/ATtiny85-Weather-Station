@@ -62,7 +62,7 @@ Both boards together and running:
 I printed a simple cylinder case ([Thingiverse](https://www.thingiverse.com/thing:4432103)) to mount the weather station and have it on the back patio:
 ![Circuit Board](images/WeatherStation-in-case.png)
 
-Arduino Sketch Code: [Here](attiny85-temp-display/)
+Arduino Sketch Code: [Here](https://github.com/jasonacox/ATtiny85-Weather-Station/tree/master/src/attiny85-temp-display)
 
 ## Construction (Opiton B - TM1637 Module)
 
@@ -73,7 +73,7 @@ Arduino Sketch Code: [Here](attiny85-temp-display/)
               (GND)       G -|5  y  5|- PN0  (SDApin)  BME280
                              +-------+   
 
-Arduino Sketch Code: [Here](attiny85-temp-tm1637/)
+Arduino Sketch Code: [Here](ahttps://github.com/jasonacox/ATtiny85-Weather-Station/tree/master/src/attiny85-temp-tm1637)
 
 
 ## Power Supply
