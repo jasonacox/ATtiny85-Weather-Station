@@ -73,7 +73,7 @@ Arduino Sketch Code: [Here](https://github.com/jasonacox/ATtiny85-Weather-Statio
               (GND)       G -|5  y  5|- PN0  (SDApin)  BME280
                              +-------+   
 
-Arduino Sketch Code: [Here](ahttps://github.com/jasonacox/ATtiny85-Weather-Station/tree/master/src/attiny85-temp-tm1637)
+Arduino Sketch Code: [Here](https://github.com/jasonacox/ATtiny85-Weather-Station/tree/master/src/attiny85-temp-tm1637)
 
 
 ## Power Supply
